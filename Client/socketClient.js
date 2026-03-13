@@ -17,14 +17,25 @@ export const socket = io("https://chatapp-1-91a9.onrender.com");
 
 /**
  * Setup all socket event listeners
+ * Registers handlers for server events related to messaging and connections
  */
 export function setupSocketListeners() {
+    /**
+     * Event: connect
+     * Fires when client successfully connects to the server
+     * Initializes public mode key for initial broadcast capability
+     */
     socket.on("connect", async () => {
         displayMessage(`You connected with id: ${socket.id}`);
         // Set key for public mode (shared by all clients in public mode)
         await setSharedKey("public-shared-key");
     });
 
+    /**
+     * Event: server-message
+     * Receives encrypted message from server
+     * Decrypts using current session key and displays to user
+     */
     socket.on("server-message", async (message) => {
         const messageBlock = message;
         const currentKey = getKey();
@@ -37,11 +48,21 @@ export function setupSocketListeners() {
         console.log(typeof messageBlock);
     });
 
+    /**
+     * Event: server-activeSockets
+     * Receives list of all currently connected socket IDs
+     * Updates UI with available clients (excluding self)
+     */
     socket.on("server-activeSockets", (activeSockets) => {
         const filteredSockets = activeSockets.filter(id => id !== socket.id);
         displaySocket(filteredSockets);
     });
 
+    /**
+     * Event: direct-socket-disconnect
+     * Notifies client that their direct message peer has disconnected
+     * Reverts socket back to public mode
+     */
     socket.on("direct-socket-disconnect", (activeSockets, systemMessage) => {
         let message = JSON.parse(systemMessage);
         const filteredSockets = activeSockets.filter(id => id !== socket.id);
@@ -49,11 +70,21 @@ export function setupSocketListeners() {
         displaySocket(filteredSockets);
     });
 
+    /**
+     * Event: public-socket-disconnect
+     * Notifies clients when someone disconnects from public mode
+     * Updates the active sockets list
+     */
     socket.on("public-socket-disconnect", (activeSockets) => {
         const filteredSockets = activeSockets.filter(id => id !== socket.id);
         displaySocket(filteredSockets);
     });
 
+    /**
+     * Event: id-requestNotice
+     * Incoming direct connection request from another client
+     * Shows popup and sets up accept/ignore handlers
+     */
     socket.on("id-requestNotice", (senderId) => {
         idRequestNotice(senderId);
 
@@ -82,10 +113,19 @@ export function setupSocketListeners() {
         popUpIgnoreBtn.addEventListener("click", ignoreHandler);
     });
 
+    /**
+     * Event: IdConnect-accepted
+     * Notifies requester that their connection request was accepted
+     * Direct messaging can now proceed
+     */
     socket.on("IdConnect-accepted", (acceptMessage) => {
         displayMessage(acceptMessage);
     });
 
+    /**
+     * Event: IdConnect-rejected
+     * Notifies requester that their connection request was rejected
+     */
     socket.on("IdConnect-rejected", (acceptMessage) => {
         displayMessage(acceptMessage);
     });
