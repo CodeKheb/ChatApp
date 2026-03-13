@@ -12,7 +12,7 @@ import {
 } from "./ui.js";
 import { popUpAcceptBtn, popUpIgnoreBtn } from "./domElements.js";
 
-export const socket = io("http://localhost:3000");
+export const socket = io("https://chatapp-hrjj.onrender.com");
 
 /**
  * Setup all socket event listeners
